@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.newlecture.web.dao.NoticeDao">
+
+  <select id="getViewList" resultType="com.newlecture.web.entity.NoticeView">
+  	SELECT * FROM (
+	  	SELECT ROWNUM AS RNUM, a.* FROM (
+	  		SELECT * FROM noticeview 
+	  		<trim prefix="where" prefixOverrides="and | or">
+	  		<if test="query != null or query != ''">
+	  			${field} like '%${query}%'
+	  		</if>
+	  			and pub = #{pub}
+	  		</trim>
+	  		<!-- <where>
+	  		<if test="query != null or query != ''">
+	  			${field} like '%${query}%'
+	  		</if>
+	  			and pub = #{pub}
+	  		</where>  -->
+	  		ORDER BY regdate DESC) a 
+	  	WHERE ROWNUM &lt;= 10)
+	  WHERE RNUM &gt;= 0
+  </select>
+  
+  <select id="getCount">
+  	select count(id) count from noticeview
+  	where ${field} like '%${query}%'
+  </select>
+  
+  <select id="getView" resultType="com.newlecture.web.entity.NoticeView">
+  	select * from noticeview
+  	where id=#{id}
+  </select>
+  
+  <select id="getNext" resultType="com.newlecture.web.entity.Notice">
+  	select * from (
+    select rownum, a.* from (
+        select * from notice1
+        where regdate &gt; (select regdate from notice1 where id=#{id})
+        order by regdate) a
+    where rownum = 1)
+  </select>
+  
+  <select id="getPrev" resultType="com.newlecture.web.entity.Notice">
+  	select * from (
+    select rownum, a.* from (
+        select * from notice1
+        where regdate &lt; (select regdate from notice1 where id=#{id})
+        order by regdate desc) a
+    where rownum = 1)
+  </select>
+  
+  <update id="update" parameterType="com.newlecture.web.entity.Notice">
+  	update
+  	set  
+  		title = ${title}, 
+  		content = ${content}, 
+  		hit = ${hit}, 
+  		pub = ${pub}
+  	where id = #{id}
+  </update>
+  
+  <insert id="insert" parameterType="com.newlecture.web.entity.Notice">
+  	insert into notice1(title, content, memberId)
+  	values(${title}, ${content}, ${memberId})
+  </insert>
+  
+  <delete id="delete">
+  	delete from notice1
+  	where id = #{id}
+  </delete>
+  
+  <delete id="deleteAll">
+  	delete from notice1
+  	where id in
+  	<foreach item="id" index="index" collection="ids"
+      open="(" separator="," close=")">
+        #{id}
+  	</foreach>
+  </delete>
+  
+  <update id="updatePubAll">
+  	update notice1
+  	set
+  		pub = #{pub}
+  	where id in 
+  	<foreach item="id" index="index" collection="ids"
+      open="(" separator="," close=")">
+        #{id}
+  	</foreach>
+  	<!-- update notice1
+  	set
+  		pub = case id
+	  			<foreach item="id" collection="pubIds"> 14,15
+	  				when #{id} then 1
+	  			</foreach>
+	  			<foreach item="id" collection="closeIds"> 21,22
+	  				when #{id} then 0
+	  			</foreach>
+  			end
+  	where id in (
+	  	<foreach item="id" collection="pubIds"> 14,15
+	  		#{id}
+	  	</foreach>
+	  	,
+	  	<foreach item="id" collection="closeIds"> 21,22
+	  		#{id}
+	  	</foreach>
+  	) -->
+<!--   	update notice1
+  	set
+  		pub = case id
+	  			when 14 then 0
+	  			when 15 then 0
+	  			when 21 then 1
+	  			when 22 then 1
+  			end
+  	where id in (14,15,21,22) -->
+  </update>
+  
+</mapper>
